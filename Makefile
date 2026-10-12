@@ -8,3 +8,14 @@ build:
 
 upload:
 	scp build/$(NAME).ino.elf debian@$(IP):/tmp/$(NAME).elf
+
+deploy: upload
+	ssh -tt debian@$(IP) "sudo sh -ec '\
+		if grep -qx running /sys/class/remoteproc/remoteproc0/state; then \
+			echo stop > /sys/class/remoteproc/remoteproc0/state; \
+		fi; \
+		cp /tmp/$(NAME).elf /lib/firmware/$(NAME).elf; \
+		echo $(NAME).elf > /sys/class/remoteproc/remoteproc0/firmware; \
+		echo start > /sys/class/remoteproc/remoteproc0/state; \
+		echo yay \
+	'"
